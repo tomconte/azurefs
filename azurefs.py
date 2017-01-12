@@ -29,7 +29,6 @@ if __name__ == '__main__':
     log.addHandler(ch)
     log.setLevel(logging.DEBUG)
 
-
 class AzureFS(LoggingMixIn, Operations):
     """Azure Blob Storage filesystem"""
 
@@ -207,7 +206,7 @@ class AzureFS(LoggingMixIn, Operations):
             f_name = path[path.find('/', 1) + 1:]
 
             try:
-                data = self.blobs.get_blob(c_name, f_name)
+                data = self.blobs.get_blob_to_bytes(c_name, f_name)
             except AzureMissingResourceHttpError:
                 dir = self._get_dir('/' + c_name, True)
                 if f_name in dir['files']:
@@ -218,7 +217,7 @@ class AzureFS(LoggingMixIn, Operations):
                 raise FuseOSError(EAGAIN)
 
         self.fd += 1
-        self.fds[self.fd] = (path, data, False)
+        self.fds[self.fd] = (path, data.content, False)
 
         return self.fd
 
@@ -324,9 +323,9 @@ class AzureFS(LoggingMixIn, Operations):
         c_name = path[1:path.find('/', 1)]
 
         try:
-            data = self.blobs.get_blob(c_name, f_name)
-            self.fds[fh] = (self.fds[fh][0], data, False)
-            return data[offset:offset + size]
+            data = self.blobs.get_blob_to_bytes(c_name, f_name)
+            self.fds[fh] = (self.fds[fh][0], data.content, False)
+            return data.content[offset:offset + size]
         except URLError, e:
             if e.code == 404:
                 raise FuseOSError(ENOENT)
