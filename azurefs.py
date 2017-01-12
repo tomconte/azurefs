@@ -18,10 +18,7 @@ from os import getuid
 from datetime import datetime
 from fuse import FUSE, FuseOSError, Operations, LoggingMixIn
 from azure.common import AzureException, AzureMissingResourceHttpError
-from azure.storage.blob import BlobService
-
-
-TIME_FORMAT = '%a, %d %b %Y %H:%M:%S %Z'
+from azure.storage.blob import BlockBlobService
 
 if not hasattr(__builtins__, 'bytes'):
     bytes = str
@@ -43,12 +40,12 @@ class AzureFS(LoggingMixIn, Operations):
     fd = 0
 
     def __init__(self, account, key):
-        self.blobs = BlobService(account, key)
+        self.blobs = BlockBlobService(account, key)
         self.rebuild_container_list()
 
     def convert_to_epoch(self, date):
         """Converts Tue, 31 Jul 2012 07:17:34 GMT format to epoch"""
-        return int(time.mktime(time.strptime(date, TIME_FORMAT)))
+        return int(time.mktime(date.timetuple()))
 
     def rebuild_container_list(self):
         cmap = dict()
